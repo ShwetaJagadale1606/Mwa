@@ -1,0 +1,447 @@
+Trip history
+ 
+
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+from sklearn.metrics import classification_report, confusion_matrix
+ 
+
+df = pd.read_csv("/content/2011-Q1-cabi-trip-history-data.csv")
+df.head()
+ 
+
+df["Duration"] = df['Duration'].str.replace('min', '')
+df["Duration"] = df['Duration'].str.replace('sec', '')
+df["Duration"] = df['Duration'].str.replace('h', '')
+df["Duration"] = df['Duration'].str.replace(' ', '')
+df["Duration"] = df['Duration'].str.replace('.', '').astype(float)
+ 
+
+address=df['End station'].unique()
+print(address)
+df = df.dropna()
+ 
+
+from sklearn.preprocessing import LabelEncoder
+gle = LabelEncoder()
+address_labels = gle.fit_transform(df['End station'])
+address_labels = gle.fit_transform(df['Start station'])
+address_mappings = {index: label for index, label in
+                  enumerate(gle.classes_)}
+ 
+
+df['End station'] = address_labels
+ 
+
+gle = LabelEncoder()
+address_labels = gle.fit_transform(df['Start station'])
+address_mappings = {index: label for index, label in
+                  enumerate(gle.classes_)}
+address_mappings
+ 
+
+df['Start station'] = address_labels
+ 
+
+df.head()
+ 
+
+gle = LabelEncoder()
+bike_labels = gle.fit_transform(df['Bike#'])
+bike_mappings = {index: label for index, label in
+                  enumerate(gle.classes_)}
+bike_mappings
+ 
+
+df['Bike#'] = bike_labels
+ 
+
+# Assign X and y
+X = df.iloc[:,[0,3,5]].values
+y = df.iloc[:, -1].values
+ 
+
+print(y)
+ 
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=0)
+ 
+
+tree = DecisionTreeClassifier(max_leaf_nodes=3, random_state=0)
+tree.fit(X_train, y_train)
+y_pred = tree.predict(X_test)
+# Check the Accuracy
+score = metrics.accuracy_score(y_test, y_pred)
+print("Accuracy of our model is: {:.1f}%".format(score*100))
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+ 
+
+________________________________________________________________________________________________-
+Text classification
+import nltk
+from nltk.tokenize import word_tokenize
+import pandas as pd
+df=pd.read_csv('IMDB Dataset.csv', index=False, encoding='utf-8')
+df.head()
+ 
+
+reviews = df.review.str.cat(sep=' ')
+#function to split text into word
+tokens = word_tokenize(reviews)
+vocabulary = set(tokens)
+print(len(vocabulary))
+frequency_dist = nltk.FreqDist(tokens)
+ 
+
+import string
+from nltk.corpus import stopwords
+stop_words = set(stopwords.words('english'))
+tokens = [w for w in tokens if not w in stop_words]
+
+frequency_dist = nltk.FreqDist(tokens)
+tokens = list(filter(lambda token: token not in string.punctuation, tokens))
+tokens=[tokens for word in tokens if word.isalpha()]
+ 
+
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+wordcloud = WordCloud().generate_from_frequencies(frequency_dist)
+plt.imshow(wordcloud)
+plt.axis("off")
+ 
+
+X_train = df.loc[:24999, 'review'].values
+y_train = df.loc[:24999, 'sentiment'].values
+X_test = df.loc[25000:, 'review'].values
+y_test = df.loc[25000:, 'sentiment'].values
+ 
+
+ 
+
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+vectorizer = TfidfVectorizer()
+train_vectors = vectorizer.fit_transform(X_train)
+test_vectors = vectorizer.transform(X_test)
+print(train_vectors.shape, test_vectors.shape)
+ 
+
+from sklearn.naive_bayes import MultinomialNB
+clf = MultinomialNB().fit(train_vectors, y_train)
+ 
+
+from  sklearn.metrics  import accuracy_score
+predicted = clf.predict(test_vectors)
+print(accuracy_score(y_test,predicted))
+ 
+
+__________________________________________________________________________
+Apriori
+ 
+
+pip install apyori
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from apyori import apriori
+ 
+
+store_data = pd.read_csv("/content/Market Basket_Small dataset.csv", header=None)
+display(store_data.head(15))
+print(store_data.shape)
+ 
+
+transactions = []
+for i in range(0, len(store_data)):
+    transactions.append([str(store_data.values[i,j]) for j in range(0, len(store_data.columns))])
+ 
+
+association_rules = apriori(transactions, min_support=0.5, min_confidence=0.7, min_lift=1.2, min_length=2)
+association_results = list(association_rules)
+ 
+
+print(len(association_results ))
+ 
+
+print("There are {} Relation derived.".format(len(association_results)))
+ 
+
+for i in range(0, len(association_results)):
+    print(association_results[i][0])
+ 
+
+# Import the transaction encoder function from mlxtend
+from mlxtend.preprocessing import TransactionEncoder
+
+# Instantiate transaction encoder and identify unique items
+encoder = TransactionEncoder().fit(transactions)
+
+# One-hot encode transactions
+onehot = encoder.transform(transactions)
+
+# Convert one-hot encoded data to DataFrame
+onehot = pd.DataFrame(onehot, columns = encoder.columns_).drop('nan', axis=1)
+
+# Print the one
+onehot.head()
+ 
+
+# Import the association rules function
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# Compute frequent itemsets using the Apriori algorithm
+frequent_itemsets = apriori(onehot, min_support = 0.5,
+                            max_len = 2, use_colnames = True)
+
+# Compute all association rules using confidence
+rules = association_rules(frequent_itemsets,
+                            metric = "confidence",
+                            min_threshold = 0.7)
+
+# Print association rules
+rules.info()
+ 
+
+rules.head()
+ 
+
+_____________________________________________________________________________
+Boston Housing
+import numpy as np
+import matplotlib.pyplot as plt
+
+import pandas as pd  
+import seaborn as sns
+
+%matplotlib inline
+ 
+
+boston_dataset = pd.read_csv("/content/BostonHousing.csv")
+ 
+
+boston_dataset.head()
+ 
+
+boston_dataset.isnull().sum()
+ 
+
+correlation_matrix = boston_dataset.corr().round(2)
+# annot = True to print the values inside the square
+sns.heatmap(data=correlation_matrix, annot=True)
+ 
+
+plt.figure(figsize=(20, 5))
+
+features = ['lstat', 'rm']
+target = boston_dataset['medv']
+
+for i, col in enumerate(features):
+    plt.subplot(1, len(features) , i+1)
+    x = boston_dataset[col]
+    y = target
+    plt.scatter(x, y, marker='o')
+    plt.title(col)
+    plt.xlabel(col)
+    plt.ylabel('medv')
+ 
+
+X = pd.DataFrame(np.c_[boston_dataset['lstat'], boston_dataset['rm']], columns = ['lstat','rm'])
+Y = boston_dataset['medv']
+ 
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, random_state=5)
+print(X_train.shape)
+print(X_test.shape)
+print(Y_train.shape)
+print(Y_test.shape)
+ 
+
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import statsmodels.api as sm
+
+lin_model = LinearRegression()
+lin_model.fit(X_train, Y_train)
+ 
+
+model = sm.OLS(Y_train, X_train).fit()
+print(model.summary())
+ 
+
+____________________________________________________________________________
+Bicycle 
+ 
+
+%matplotlib inline
+import matplotlib.pyplot as plt
+import seaborn as sns; sns.set()
+import numpy as np
+ 
+
+import pandas as pd
+data = pd.read_csv('/content/Fremont_Bridge_Bicycle_Counter.csv', index_col='Date', parse_dates=True)
+data.head()
+ 
+
+data.columns = ["Total","East", "West"]
+data["Total"] = data["West"] + data["East"]
+data.head()
+import matplotlib.pyplot as plt
+import seaborn
+seaborn.set()
+data.plot()
+plt.ylabel("Hourly Bicycle count")
+plt.show()
+ 
+
+weekly = data.resample("W").sum()
+weekly.plot(style=[':', '--', '-'])
+plt.ylabel('Weekly bicycle count')
+plt.show()
+ 
+
+counts = data
+weather = pd.read_csv('/content/BicycleWeather.csv', index_col='DATE', parse_dates=True)
+ 
+
+counts.head()
+ 
+
+weather.head()
+ 
+
+daily = counts.resample('d').sum()
+daily['Total'] = daily.sum(axis=1)
+daily = daily[['Total']] # remove other columns
+ 
+
+daily.head()
+ 
+
+days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+for i in range(7):
+    daily[days[i]] = (daily.index.dayofweek == i).astype(float)
+ 
+
+daily.head()
+ 
+
+from pandas.tseries.holiday import USFederalHolidayCalendar
+ 
+
+cal = USFederalHolidayCalendar()
+holidays = cal.holidays('2012', '2016')
+ 
+
+daily = daily.join(pd.Series(1, index=holidays, name='holiday'))  
+daily['holiday'].fillna(0, inplace=True)
+ 
+
+pd.datetime(2000, 12, 21)
+ 
+
+# temperatures are in 1/10 deg C; convert to C
+weather['TMIN'] /= 10
+weather['TMAX'] /= 10
+weather['Temp (C)'] = 0.5 * (weather['TMIN'] + weather['TMAX'])
+
+# precip is in 1/10 mm; convert to inches
+weather['PRCP'] /= 254
+weather['dry day'] = (weather['PRCP'] == 0).astype(int)
+daily = daily.join(weather[['PRCP', 'Temp (C)', 'dry day']])
+ 
+
+daily['annual'] = (daily.index - daily.index[0]).days / 365.
+ 
+
+daily.head()
+ 
+
+# Drop any rows with null values
+daily.dropna(axis=0, how='any', inplace=True)
+
+column_names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'holiday',
+                'daylight_hrs', 'PRCP', 'dry day', 'Temp (C)', 'annual']
+X = daily[column_names]
+y = daily['Total']
+
+from sklearn.linear_model import LinearRegression
+model = LinearRegression(fit_intercept=False)
+model.fit(X, y)
+daily['predicted'] = model.predict(X)
+ 
+
+daily[['Total', 'predicted']].plot(alpha=0.5);
+ 
+
+r2_score = model.score(X, y)
+print("R-squared:", r2_score)
+ 
+
+______________________________________________________
+Arima
+ 
+
+import pandas as pd
+import seaborn as sns # informative statistical graphics.
+import statsmodels.api as sm #for ARIMA and SARIMAX
+import datetime
+from datetime import timedelta
+
+df = pd.read_csv('/content/covid_19_india.csv')
+ 
+
+df= df.drop(labels = ["Sno","State","Time","Cured","Deaths"], axis= 1, inplace= False)
+ 
+
+df.head()
+ 
+
+import matplotlib.pyplot as plt
+sns.lineplot(x="Date", y="Confirmed",legend = 'full' , data=df)
+plt.title("Confirmed Cases Over Time")
+plt.xticks(rotation=45)
+plt.show()
+ 
+
+import matplotlib.pyplot as plt
+sns.lineplot(x="Date", y="Confirmed",legend = 'full' , data=df, ci=None)
+plt.title("Confirmed Cases Over Time")
+plt.xticks(rotation=90)
+plt.show()
+ 
+
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+df = df.resample('W').sum()
+ 
+
+train_data = df[:int(0.9*(len(df)))]
+test_data = df[int(0.9*(len(df))):]
+ 
+
+import statsmodels.api as sm
+ 
+
+model = sm.tsa.arima.ARIMA(train_data, order=(2,1,2))
+model_fit = model.fit()
+ 
+
+ 
+
+predictions = model_fit.predict(start=len(train_data), end=len(train_data)+len(test_data)-1, typ='levels')
+ 
+
+plt.figure(figsize=(10,6))
+plt.plot(train_data, label='Training Data')
+plt.plot(test_data, label='Testing Data')
+plt.plot(predictions, label='Predicted Data')
+plt.legend()
+plt.show()
