@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -7,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <sstream>
+#include <fstream>
 
 // Function to split a string into words
 std::vector<std::string> splitWords(const std::string& str) {
