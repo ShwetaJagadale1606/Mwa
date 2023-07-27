@@ -1,0 +1,79 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+struct Person {
+    std::string name;
+    std::string dateOfBirth;
+};
+
+// Function to calculate age based on date of birth and today's date
+int calculateAge(const std::string& dob, const std::string& today) {
+    // Assuming the date format is "dd-mon-yyyy"
+    int dobDay, dobMonth, dobYear;
+    int todayDay, todayMonth, todayYear;
+    std::stringstream dobStream(dob);
+    std::stringstream todayStream(today);
+    char dash;
+
+    dobStream >> dobDay >> dash;
+    dobStream.ignore(4); // Ignore month
+    dobStream >> dobYear;
+
+    todayStream >> todayDay >> dash;
+    todayStream.ignore(4); // Ignore month
+    todayStream >> todayYear;
+
+    int age = todayYear - dobYear;
+    if (todayMonth < dobMonth || (todayMonth == dobMonth && todayDay < dobDay)) {
+        age--;
+    }
+    return age;
+}
+
+int main() {
+    std::ifstream inputFile("people_records.txt");
+    if (!inputFile) {
+        std::cout << "Error opening file." << std::endl;
+        return 1;
+    }
+
+    std::string todayDate = "01-Aug-2023";
+    std::map<int, std::vector<Person>> ageCategoryMap;
+
+    // Read data from the file and categorize people into age groups
+    std::string line;
+    while (std::getline(inputFile, line)) {
+        std::istringstream iss(line);
+        std::string name, dob, city;
+        char comma;
+
+        if (!(iss >> name >> comma >> dob >> comma >> city)) {
+            continue;
+        }
+
+        int age = calculateAge(dob, todayDate);
+
+        if (age >= 0 && age <= 100) {
+            int category = age / 10 * 10;
+            ageCategoryMap[category].push_back({name, dob});
+        }
+    }
+
+    // Displaying the results
+    for (auto it = ageCategoryMap.rbegin(); it != ageCategoryMap.rend(); ++it) {
+        int category = it->first;
+        std::vector<Person>& peopleInCategory = it->second;
+
+        std::cout << "Category " << category + 1 << "-" << category + 10 << " - Count " << peopleInCategory.size() << "\n";
+        for (const auto& person : peopleInCategory) {
+            std::cout << person.name << ", " << person.dateOfBirth << "\n";
+        }
+        std::cout << std::endl;
+    }
+
+    return 0;
+}
