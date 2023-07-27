@@ -1,0 +1,90 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+
+// Function to split a string into words
+std::vector<std::string> splitWords(const std::string& str) {
+    std::istringstream iss(str);
+    std::vector<std::string> words;
+    std::string word;
+    while (iss >> word) {
+        words.push_back(word);
+    }
+    return words;
+}
+
+// Function to remove common words from a string and convert it to lowercase
+std::string processWord(const std::string& word) {
+    const std::unordered_set<std::string> common_words = {
+        "there", "is", "are", "were", "was", "i", "we", "of", "in"
+    };
+    std::string processed_word = word;
+    for (char& c : processed_word) {
+        c = std::tolower(c);
+    }
+    if (common_words.count(processed_word) > 0) {
+        return "";
+    }
+    return processed_word;
+}
+
+int main() {
+    std::unordered_map<std::string, int> wordOccurrences;
+    std::vector<std::string> lines;
+
+    std::ifstream inputFile("input.txt"); // Open input file
+    if (!inputFile.is_open()) {
+        std::cerr << "Error opening input file." << std::endl;
+        return 1;
+    }
+
+    std::string line;
+    while (std::getline(inputFile, line)) {
+        if (line.empty()) break;
+        lines.push_back(line);
+        std::vector<std::string> words = splitWords(line);
+
+        for (const std::string& word : words) {
+            std::string processed_word = processWord(word);
+            if (!processed_word.empty()) {
+                wordOccurrences[processed_word]++;
+            }
+        }
+    }
+
+    // Sort the words based on their occurrences in descending order
+    std::sort(lines.begin(), lines.end(), [&](const std::string& a, const std::string& b) {
+        int count_a = 0, count_b = 0;
+        std::vector<std::string> words_a = splitWords(a);
+        std::vector<std::string> words_b = splitWords(b);
+
+        for (const std::string& word : words_a) {
+            std::string processed_word = processWord(word);
+            if (!processed_word.empty()) {
+                count_a += wordOccurrences[processed_word];
+            }
+        }
+
+        for (const std::string& word : words_b) {
+            std::string processed_word = processWord(word);
+            if (!processed_word.empty()) {
+                count_b += wordOccurrences[processed_word];
+            }
+        }
+
+        return count_a > count_b;
+    });
+
+    // Print the lines
+    for (const std::string& line : lines) {
+        std::cout << line << std::endl;
+    }
+
+    return 0;
+}
